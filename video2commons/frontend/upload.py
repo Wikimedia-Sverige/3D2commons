@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Copyright (C) 2015-2016 Zhuyifei1999
+# Copyright (C) 2015-2016, 2018 Zhuyifei1999, Sebastian Berlin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@ import shutil
 
 from flask import request, jsonify
 
+from threed2commons.config import uploads_path
+
 RE_CONTENT_RANGE = re.compile(r'^bytes (\d+)-(\d+)/(\d+)$')
 RE_ALLOWED_FILEKEYS = re.compile(r'^[a-zA-Z0-9-]+$')
 
@@ -37,8 +39,7 @@ class WrongOffset(Exception):
 
 
 def getpath(digest):
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                        'static/uploads', digest)
+    return os.path.join(uploads_path, digest)
 
 
 def stat(permpath):

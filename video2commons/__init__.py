@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Copyright (C) 2016 Zhuyifei1999
+# Copyright (C) 2016, 2018 Zhuyifei1999, Sebastian Berlin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,13 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-"""videocommons package."""
+"""threed2commons package."""
 
 from __future__ import absolute_import
 
-from video2commons import config
-from video2commons import exceptions
-from video2commons import backend
-from video2commons import frontend
+from threed2commons import config
+from threed2commons import exceptions
+from threed2commons import backend
+from threed2commons import frontend
 
 __all__ = ['config', 'exceptions', 'backend', 'frontend']

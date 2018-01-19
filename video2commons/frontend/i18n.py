@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-"""video2commons web i18n module."""
+"""threed2commons web i18n module."""
 
 from __future__ import absolute_import
 
@@ -25,7 +25,7 @@ import os
 import json
 
 from flask import Blueprint, Response, request, session, g
-from video2commons.frontend.shared import redisconnection
+from threed2commons.frontend.shared import redisconnection
 
 i18nblueprint = Blueprint('i18n', __name__)
 

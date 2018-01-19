@@ -5,6 +5,7 @@
 """Pywikibot configs."""
 
 family = 'commons'
-mylang = 'commons'
+mylang = 'beta'
+# mylang = 'commons'
 
 socket_timeout = 30, 300  # chunked uploading unreliable

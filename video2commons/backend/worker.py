@@ -15,13 +15,15 @@
 # along with self program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-"""video2commons backend worker."""
+"""threed2commons backend worker."""
 
 from __future__ import absolute_import
 
 import os
 import sys
 import shutil
+import uuid
+import urllib
 
 import celery
 from celery.contrib.abortable import AbortableTask
@@ -29,13 +31,11 @@ from celery.exceptions import Ignore
 from redis import Redis
 import pywikibot
 
-from video2commons.exceptions import TaskError, TaskAbort, NeedServerSideUpload
-from video2commons.backend import download
-from video2commons.backend import encode
-from video2commons.backend import upload
-from video2commons.backend import subtitles as subtitleuploader
-from video2commons.config import (
-    redis_pw, redis_host, consumer_key, consumer_secret, http_host
+from threed2commons.exceptions import TaskError, TaskAbort, NeedServerSideUpload
+from threed2commons.backend import upload
+from threed2commons.config import (
+    redis_pw, redis_host, consumer_key, consumer_secret, http_host,
+    uploads_path, pwb_site, ssu_path
 )
 
 redisurl = 'redis://:' + redis_pw + '@' + redis_host + ':6379/'
@@ -70,22 +70,12 @@ def main(
         raise Ignore
 
     # Check for 10G of disk space, refuse to run if it is unavailable
-    st = os.statvfs('/srv')
+    st = os.statvfs(ssu_path)
     if st.f_frsize * st.f_bavail < 10 << 30:
         self.retry(max_retries=20, countdown=5*60)
         assert False  # should never reach here
 
     redisconnection.setex(lockkey, 'T', 7 * 24 * 3600)
-
-    # Generate temporary directory for task
-    for i in range(10):  # 10 tries
-        id = os.urandom(8).encode('hex')
-        outputdir = '/srv/v2c/output/' + id
-        if not os.path.isdir(outputdir):
-            os.mkdir(outputdir)
-            break
-    else:
-        raise TaskError("Too many retries to generate a task id")
 
     s = Stats()
 
@@ -107,52 +97,31 @@ def main(
         raise TaskError(text)
 
     try:
-        statuscallback('Downloading...', -1)
-        d = download.download(
-            url, ie_key, downloadkey, subtitles,
-            outputdir, statuscallback, errorcallback
-        )
-        if not d:
-            errorcallback('Download failed!')
-        file = d['target']
-        if not file:
-            errorcallback('Download failed!')
-        subtitles = subtitles and d['subtitles']
-
-        statuscallback('Converting...', -1)
-        file = encode.encode(file, convertkey, statuscallback, errorcallback)
-        if not file:
-            errorcallback('Convert failed!')
-        ext = file.split('.')[-1]
+        if url.startswith('uploads:'):
+            # Local file.
+            path = url.replace("uploads:", uploads_path + "/")
+        else:
+            # Remote file, download needed.
+            statuscallback('Downloading...', -1)
+            path = os.path.join(uploads_path, str(uuid.uuid1())
+            )
+            try:
+                urllib.urlretrieve(url, path)
+            except:
+                errorcallback('Download failed!')
 
         statuscallback('Configuring Pywikibot...', -1)
-        pywikibot.config.authenticate['commons.wikimedia.org'] = \
+        pywikibot.config.authenticate[pwb_site] = \
             (consumer_key, consumer_secret) + tuple(oauth)
-        pywikibot.config.usernames['commons']['commons'] = username
-        pywikibot.Site('commons', 'commons', user=username).login()
+        pywikibot.Site(user=username).login()
 
         statuscallback('Uploading...', -1)
-        filename += '.' + ext
         filename, wikifileurl = upload.upload(
-            file, filename, url, http_host,
+            path, filename, url, http_host,
             filedesc, username, statuscallback, errorcallback
         )
         if not wikifileurl:
             errorcallback('Upload failed!')
-
-        if subtitles:
-            statuscallback('Uploading subtitles...', -1)
-            try:
-                subtitleuploader.subtitles(
-                    subtitles, filename, username,
-                    statuscallback, errorcallback
-                )
-            except TaskAbort:
-                raise
-            except Exception, e:
-                statuscallback(type(e).__name__ + ": " + str(e), None)
-                print e
-                pass
 
     except NeedServerSideUpload as e:
         # json serializer cannot properly serialize an exception
@@ -175,5 +144,3 @@ def main(
         pywikibot.config.authenticate.clear()
         pywikibot.config.usernames['commons'].clear()
         pywikibot._sites.clear()
-
-        shutil.rmtree(outputdir)

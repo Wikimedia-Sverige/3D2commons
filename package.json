@@ -17,10 +17,14 @@
   },
   "homepage": "https://github.com/Toollabs/video2commons#readme",
   "devDependencies": {
-    "gulp": "^3.9.1",
+    "gulp": "~3.9.1",
     "gulp-htmlmin": "^3.0.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-uglify": "^2.1.2"
+    "gulp-rename": "~1.2.2",
+    "gulp-uglify": "~3.0.0",
+    "gulp-concat": "~2.6.1",
+    "jshint": "~2.9.5",
+    "gulp-jshint": "~2.1.0",
+    "gulp-sass": "~3.1.0"
   },
   "dependencies": {
     "express": "^4.15.3",

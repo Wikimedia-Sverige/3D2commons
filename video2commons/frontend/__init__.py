@@ -21,6 +21,6 @@
 
 from __future__ import absolute_import
 
-from video2commons.frontend.app import app
+from threed2commons.frontend.app import app
 
 __all__ = ['app']

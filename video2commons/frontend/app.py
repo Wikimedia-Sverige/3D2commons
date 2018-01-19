@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-"""video2commons web frontend."""
+"""threed2commons web frontend."""
 
 from __future__ import absolute_import
 
@@ -30,14 +30,15 @@ from mwoauth import AccessToken, ConsumerToken, RequestToken, Handshaker
 from requests_oauthlib import OAuth1
 import requests
 
-from video2commons.config import consumer_key, consumer_secret, api_url
+from threed2commons.config import consumer_key, consumer_secret, api_url
 
-from video2commons.frontend.redisession import RedisSessionInterface
-from video2commons.frontend.shared import redisconnection, check_banned
-from video2commons.frontend.api import api
-from video2commons.frontend.i18n import (
+from threed2commons.frontend.redisession import RedisSessionInterface
+from threed2commons.frontend.shared import redisconnection, check_banned
+from threed2commons.frontend.api import api
+from threed2commons.frontend.i18n import (
     i18nblueprint, translate as _, getlanguage, is_rtl
 )
+from threed2commons.frontend import sketchfab
 
 consumer_token = ConsumerToken(consumer_key, consumer_secret)
 handshaker = Handshaker(api_url, consumer_token)
@@ -94,6 +95,7 @@ def force_https():
 @app.route('/')
 def main():
     """Main page."""
+    print "> main()"
     banned = check_banned()
     if banned:
         return render_template(
@@ -180,7 +182,7 @@ def loginredirect():
     return redirect(redirecturl)
 
 
-@app.route('/oauthcallback')
+@app.route('/oauth_callback_commons')
 def logincallback():
     """Finialize OAuth login."""
     request_token = RequestToken(
@@ -188,20 +190,22 @@ def logincallback():
         session['request_token_secret']
     )
     access_token = handshaker.complete(request_token, request.query_string)
+    print "access_token =", access_token
 
     session.pop('access_token_key', None)
     session.pop('access_token_secret', None)
     session.pop('username', None)
 
     identify = handshaker.identify(access_token)
-    if not (identify['editcount'] >= 50 and
-            'autoconfirmed' in identify['rights']):
-        return render_template(
-            'error.min.html',
-            message='Due to ongoing abuse, you must be autoconfirmed '
-                    'with at least 50 edits on Commons to use this tool.',
-            loggedin=True
-        )
+    # NOTE: Do we want/need this?
+    # if not (identify['editcount'] >= 50 and
+    #         'autoconfirmed' in identify['rights']):
+    #     return render_template(
+    #         'error.min.html',
+    #         message='Due to ongoing abuse, you must be autoconfirmed '
+    #                 'with at least 50 edits on Commons to use this tool.',
+    #         loggedin=True
+    #     )
 
     session['access_token_key'], session['access_token_secret'] = \
         access_token.key, access_token.secret
@@ -215,5 +219,11 @@ def logincallback():
 def logout():
     """Logout: clear all session data."""
     session.clear()
+
+    return redirect(url_for('main'))
+
+@app.route('/oauth2_redirect_sketchfab')
+def ouath_redirect():
+    sketchfab.oauth_redirect()
 
     return redirect(url_for('main'))

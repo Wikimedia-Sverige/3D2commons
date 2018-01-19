@@ -1,11 +1,11 @@
 [
     {
-      "name" : "video2commons",
-      "title" : "video2commons",
-      "description" : "Transfer video and audio from external sites to Wikimedia Commons",
-      "url" : "https://tools.wmflabs.org/video2commons/",
-      "keywords" : "video, audio, conversion, transfer, webm",
-      "author" : "Zhuyifei1999, Steinsplitter, Matanya, The_Photographer",
-      "repository" : "https://github.com/Toollabs/video2commons"
+      "name" : "threed2commons",
+      "title" : "threed2commons",
+      "description" : "Transfer 3D-files from disk or external sites to Wikimedia Commons and other sites.",
+      "url" : "https://tools.wmflabs.org/threed2commons/",
+      "keywords" : "3D, transfer, upload",
+      "author" : "Zhuyifei1999, Steinsplitter, Matanya, The_Photographer, Sebastian Berlin",
+      "repository" : "https://github.com/riksantikvarieambetet/threed2commons"
     }
 ]

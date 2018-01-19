@@ -42,19 +42,19 @@
 	};
 
 	var $addTaskDialog, newTaskData, SSUs, username;
-	var video2commons = window.video2commons = {
+	var threed2commons = window.threed2commons = {
 		init: function () {
 			$( '#content' )
 				.html( htmlContent.loading );
 
 			SSUs = {};
 
-			video2commons.loadCsrf( video2commons.checkStatus );
+			threed2commons.loadCsrf( threed2commons.checkStatus );
 
 			// If location.hash matches, fire up a new task dialog
 			var rePrefill = /^#?!(https?:\/\/.+)/;
 			if ( rePrefill.test( window.location.hash ) ) {
-				video2commons.addTask( {
+				threed2commons.addTask( {
 					url: window.location.hash.match( rePrefill )[ 1 ]
 				} );
 			}
@@ -71,9 +71,9 @@
 		// Functions related to showing running/finished tasks
 		checkStatus: function () {
 			if ( window.WebSocket && window.io ) {
-				video2commons.checkStatusSocket();
+				threed2commons.checkStatusSocket();
 			} else {
-				video2commons.checkStatusLegacy();
+				threed2commons.checkStatusLegacy();
 			}
 		},
 
@@ -81,7 +81,7 @@
 			if ( window.socket ) {
 				return;
 			}
-			var socket = window.socket = io( '//tools.wmflabs.org/', { path: '/video2commons-socketio' } );
+			var socket = window.socket = io( '//tools.wmflabs.org/', { path: '/threed2commons-socketio' } );
 
 			socket.on( 'connect', function () {
 				$.get( 'api/iosession' )
@@ -94,17 +94,17 @@
 			} );
 
 			socket.on( 'status', function ( data ) {
-				video2commons.alterTaskTableBoilerplate( function () {
-					video2commons.populateResults( data );
+				threed2commons.alterTaskTableBoilerplate( function () {
+					threed2commons.populateResults( data );
 				} );
 			} );
 			socket.on( 'update', function ( taskid, data ) {
-				video2commons.alterTaskTableBoilerplate( function () {
-					video2commons.updateTask( data );
+				threed2commons.alterTaskTableBoilerplate( function () {
+					threed2commons.updateTask( data );
 				} );
 			} );
 			socket.on( 'remove', function ( taskid ) {
-				video2commons.alterTaskTableBoilerplate( function () {
+				threed2commons.alterTaskTableBoilerplate( function () {
 					$( '#task-' + taskid ).remove();
 				} );
 			} );
@@ -117,8 +117,8 @@
 			var url = 'api/status';
 			$.get( url )
 				.done( function ( data ) {
-					video2commons.alterTaskTableBoilerplate( function () { video2commons.populateResults( data ); } );
-					window.lastStatusCheck = setTimeout( video2commons.checkStatusLegacy, 5000 );
+					threed2commons.alterTaskTableBoilerplate( function () { threed2commons.populateResults( data ); } );
+					window.lastStatusCheck = setTimeout( threed2commons.checkStatusLegacy, 5000 );
 				} )
 				.fail( function () {
 					$( '#content' )
@@ -133,7 +133,7 @@
 			$( '#content' )
 				.append( addButton );
 			addButton.click( function () {
-				video2commons.addTask();
+				threed2commons.addTask();
 			} );
 			var ssuButton = $( htmlContent.requestServerSide );
 			$( '#content' )
@@ -142,7 +142,7 @@
 
 		alterTaskTableBoilerplate: function ( cb ) {
 			if ( !$( '#tasktable' ).length ) {
-				video2commons.setupTables();
+				threed2commons.setupTables();
 			}
 
 			var isatbottom = ( window.innerHeight + window.scrollY ) >= document.body.offsetHeight;
@@ -153,7 +153,7 @@
 				$( '#ssubtn' )
 					.removeClass( 'disabled' )
 					.show()
-					.attr( 'href', video2commons.makeSSULink( SSUs ) );
+					.attr( 'href', threed2commons.makeSSULink( SSUs ) );
 			} else {
 				$( '#ssubtn' )
 					.addClass( 'disabled' )
@@ -173,7 +173,7 @@
 
 			// add & update
 			$.each( data.values, function ( i, val ) {
-				video2commons.updateTask( val );
+				threed2commons.updateTask( val );
 				ids.push( val.id );
 			} );
 
@@ -181,7 +181,7 @@
 			table.find( '> tr' )
 				.each( function () {
 					var $row = $( this ),
-						id = video2commons.getTaskIDFromDOMID( $row.attr( 'id' ) );
+						id = threed2commons.getTaskIDFromDOMID( $row.attr( 'id' ) );
 					if ( ids.indexOf( id ) < 0 ) {
 						$row.remove();
 					}
@@ -201,10 +201,10 @@
 					status: val.status
 				} );
 				table.append( $row );
-				video2commons.setupTaskRow( $row, id, val.status );
+				threed2commons.setupTaskRow( $row, id, val.status );
 			} else if ( $row.attr( 'status' ) !== val.status ) {
 				$row.html( '' );
-				video2commons.setupTaskRow( $row, id, val.status );
+				threed2commons.setupTaskRow( $row, id, val.status );
 			}
 
 			var $title = $row.find( '#' + id + '-title' );
@@ -230,7 +230,7 @@
 			if ( val.status === 'done' ) {
 				setStatusText( Mustache.render( '{{> taskDone}}', i18n, i18n ), val.url, val.text );
 			} else if ( val.status === 'needssu' ) {
-				setStatusText( Mustache.render( '{{> errorTooLarge}}', i18n, i18n ), video2commons.makeSSULink( [ val ] ) );
+				setStatusText( Mustache.render( '{{> errorTooLarge}}', i18n, i18n ), threed2commons.makeSSULink( [ val ] ) );
 			} else if ( val.status === 'fail' ) {
 				setStatusText( val.text );
 				if ( val.restartable ) {
@@ -238,7 +238,7 @@
 						.show()
 						.off()
 						.click( function () {
-							video2commons.eventTask( this, 'restart' );
+							threed2commons.eventTask( this, 'restart' );
 						} );
 				} else {
 					$row.find( '#' + id + '-restartbutton' )
@@ -250,7 +250,7 @@
 			}
 
 			if ( val.status === 'progress' ) {
-				video2commons.setProgressBar( $row.find( '#' + id + '-progress' ), val.progress );
+				threed2commons.setProgressBar( $row.find( '#' + id + '-progress' ), val.progress );
 			}
 
 			if ( val.status === 'needssu' ) {
@@ -276,41 +276,41 @@
 							.attr( 'id', id + '-progress' )
 							.attr( 'width', '30%' ) );
 					/* eslint-enable indent */
-					var $abortbutton = video2commons.eventButton( id, 'abort' );
+					var $abortbutton = threed2commons.eventButton( id, 'abort' );
 					$row.find( '#' + id + '-status' )
 						.append( $abortbutton );
 					var progressbar = $row.find( '#' + id + '-progress' )
 						.html( htmlContent.progressbar );
-					video2commons.setProgressBar( progressbar, -1 );
+					threed2commons.setProgressBar( progressbar, -1 );
 					$row.removeClass( 'success danger' );
 					break;
 				case 'done':
-					video2commons.appendButtons(
-						[ video2commons.eventButton( id, 'remove' ) ],
+					threed2commons.appendButtons(
+						[ threed2commons.eventButton( id, 'remove' ) ],
 						$row, [ 'danger', 'success' ],
 						id
 					);
 					break;
 				case 'fail':
-					var $removebutton = video2commons.eventButton( id, 'remove' );
-					var $restartbutton = video2commons.eventButton( id, 'restart' )
+					var $removebutton = threed2commons.eventButton( id, 'remove' );
+					var $restartbutton = threed2commons.eventButton( id, 'restart' )
 						.hide();
 
-					video2commons.appendButtons(
+					threed2commons.appendButtons(
 						[ $removebutton, $restartbutton ],
 						$row, [ 'success', 'danger' ],
 						id
 					);
 					break;
 				case 'needssu':
-					video2commons.appendButtons(
-						[ video2commons.eventButton( id, 'remove' ) ],
+					threed2commons.appendButtons(
+						[ threed2commons.eventButton( id, 'remove' ) ],
 						$row, [ 'success', 'danger' ],
 						id
 					);
 					break;
 				case 'abort':
-					video2commons.appendButtons(
+					threed2commons.appendButtons(
 						[],
 						$row, [ 'success', 'danger' ],
 						id
@@ -330,7 +330,7 @@
 				} ).join( '\n' );
 			return 'https://phabricator.wikimedia.org/maniphest/task/edit/form/1/?' + $.param( {
 				title: 'Server side upload for ' + username,
-				projects: 'Wikimedia-Site-requests,commons,video2commons',
+				projects: 'Wikimedia-Site-requests,commons,3D2commons',
 				description: Mustache.render( ssuTemplate, { urls: urls, checksums: checksums } )
 			} );
 		},
@@ -368,15 +368,15 @@
 			$obj.off()
 				.addClass( 'disabled' );
 
-			video2commons.apiPost( 'task/' + eventName, {
-				id: video2commons.getTaskIDFromDOMID( $obj.attr( 'id' ) )
+			threed2commons.apiPost( 'task/' + eventName, {
+				id: threed2commons.getTaskIDFromDOMID( $obj.attr( 'id' ) )
 			} )
 				.done( function ( data ) {
 					if ( data.error ) {
 						// eslint-disable-next-line no-alert
 						window.alert( data.error );
 					}
-					video2commons.checkStatus();
+					threed2commons.checkStatus();
 				} );
 		},
 
@@ -392,7 +392,7 @@
 				.attr( 'id', id + '-' + eventName + 'button' )
 				.off()
 				.click( function () {
-					video2commons.eventTask( this, eventName );
+					threed2commons.eventTask( this, eventName );
 				} );
 		},
 
@@ -446,7 +446,7 @@
 
 						$addTaskDialog.find( '#btn-cancel' )
 							.click( function () {
-								video2commons.abortUpload();
+								threed2commons.abortUpload();
 							} );
 
 						// HACK
@@ -461,11 +461,11 @@
 								}
 							} );
 
-						video2commons.openTaskModal( taskdata );
+						threed2commons.openTaskModal( taskdata );
 					} );
 
 			} else { // It's not redundant because Ajax load
-				video2commons.openTaskModal( taskdata );
+				threed2commons.openTaskModal( taskdata );
 			}
 		},
 
@@ -475,7 +475,7 @@
 			$addTaskDialog.find( '.modal-body' )
 				.html( '<center>' + loaderImage + '</center>' );
 
-			video2commons.newTask( taskdata );
+			threed2commons.newTask( taskdata );
 			$addTaskDialog.modal( {
 				backdrop: 'static'
 			} );
@@ -486,7 +486,7 @@
 					.focus();
 			} );
 
-			video2commons.reactivatePrevNextButtons();
+			threed2commons.reactivatePrevNextButtons();
 		},
 
 		newTask: function ( taskdata ) {
@@ -507,7 +507,7 @@
 			};
 			$.extend( newTaskData, taskdata );
 
-			video2commons.setupAddTaskDialog();
+			threed2commons.setupAddTaskDialog();
 		},
 
 		setupAddTaskDialog: function () {
@@ -537,7 +537,7 @@
 							$addTaskDialog.find( '#subtitles' )
 								.prop( 'checked', newTaskData.subtitles );
 
-							video2commons.initUpload();
+							threed2commons.initUpload();
 						} );
 					break;
 				case 'target':
@@ -583,7 +583,7 @@
 							$addTaskDialog.find( '#keep' )
 								.text( keep.join( ', ' ) );
 
-							video2commons.setText( [
+							threed2commons.setText( [
 								'url',
 								'extractor',
 								'filename',
@@ -610,24 +610,24 @@
 
 					$addTaskDialog.find( '#btn-next' )
 						.html( htmlContent.nextbutton );
-					video2commons.setPrevNextButton( 'next' );
+					threed2commons.setPrevNextButton( 'next' );
 					break;
 				case 'target':
-					video2commons.setPrevNextButton( 'prev' );
+					threed2commons.setPrevNextButton( 'prev' );
 
 					$addTaskDialog.find( '#btn-next' )
 						.html( htmlContent.nextbutton );
-					video2commons.setPrevNextButton( 'next' );
+					threed2commons.setPrevNextButton( 'next' );
 					break;
 				case 'confirm':
-					video2commons.setPrevNextButton( 'prev' );
+					threed2commons.setPrevNextButton( 'prev' );
 
 					$addTaskDialog.find( '#btn-next' )
 						.removeClass( 'disabled' )
 						.html( htmlContent.confirmbutton )
 						.off()
 						.click( function () {
-							video2commons.disablePrevNext( false );
+							threed2commons.disablePrevNext( false );
 
 							$addTaskDialog.modal( 'hide' );
 							$( '#tasktable > tbody' )
@@ -635,13 +635,13 @@
 							window.scrollTo( 0, document.body.scrollHeight );
 
 							newTaskData.uploadedFile = {}; // FIXME
-							video2commons.apiPost( 'task/run', newTaskData )
+							threed2commons.apiPost( 'task/run', newTaskData )
 								.done( function ( data ) {
 									if ( data.error ) {
 										// eslint-disable-next-line no-alert
 										window.alert( data.error );
 									}
-									video2commons.checkStatus();
+									threed2commons.checkStatus();
 								} );
 						} );
 			}
@@ -652,7 +652,7 @@
 				.removeClass( 'disabled' )
 				.off()
 				.click( function () {
-					video2commons.processInput( button );
+					threed2commons.processInput( button );
 				} );
 		},
 
@@ -683,7 +683,7 @@
 						newTaskData.subtitles = $addTaskDialog.find( '#subtitles' )
 							.is( ':checked' );
 						if ( !newTaskData.formats.length || video !== newTaskData.video || audio !== newTaskData.audio ) {
-							return video2commons.askAPI( 'listformats', {
+							return threed2commons.askAPI( 'listformats', {
 								video: video,
 								audio: audio
 							}, [ 'video', 'audio', 'format', 'formats' ] );
@@ -705,11 +705,11 @@
 							var uploadedFile = newTaskData.uploadedFile[ url ];
 							if ( uploadedFile ) {
 								newTaskData.url = url;
-								return video2commons.askAPI( 'makedesc', {
+								return threed2commons.askAPI( 'makedesc', {
 									filename: uploadedFile.name || ''
 								}, [ 'extractor', 'filedesc', 'filename' ] );
 							} else {
-								return video2commons.askAPI( 'extracturl', {
+								return threed2commons.askAPI( 'extracturl', {
 									url: url
 								}, [ 'url', 'extractor', 'filedesc', 'filename' ] );
 							}
@@ -730,7 +730,7 @@
 						}
 
 						if ( !newTaskData.filenamechecked || filename !== newTaskData.filename ) {
-							return video2commons.askAPI( 'validatefilename', {
+							return threed2commons.askAPI( 'validatefilename', {
 								filename: filename
 							}, [ 'filename' ] )
 								.done( function () {
@@ -749,7 +749,7 @@
 						}
 
 						if ( !newTaskData.filedescchecked || filedesc !== newTaskData.filedesc ) {
-							return video2commons.askAPI( 'validatefiledesc', {
+							return threed2commons.askAPI( 'validatefiledesc', {
 								filedesc: filedesc
 							}, [ 'filedesc' ] )
 								.done( function () {
@@ -765,19 +765,19 @@
 					deferred = resolved;
 			}
 
-			video2commons.promiseWorkingOn( deferred.done( function () {
+			threed2commons.promiseWorkingOn( deferred.done( function () {
 				var action = {
 					prev: -1,
 					next: 1
 				}[ button ];
 				var steps = [ 'source', 'target', 'confirm' ];
 				newTaskData.step = steps[ steps.indexOf( newTaskData.step ) + action ];
-				video2commons.setupAddTaskDialog();
+				threed2commons.setupAddTaskDialog();
 			} ) );
 		},
 
 		promiseWorkingOn: function ( promise ) {
-			video2commons.disablePrevNext( true );
+			threed2commons.disablePrevNext( true );
 
 			return promise
 				.fail( function ( error ) {
@@ -792,7 +792,7 @@
 						.text( 'Error: ' + error )
 						.show();
 				} )
-				.always( video2commons.reactivatePrevNextButtons );
+				.always( threed2commons.reactivatePrevNextButtons );
 		},
 
 		abortUpload: function ( deferred, abortReason ) {
@@ -809,6 +809,7 @@
 
 			window.jqXHR = $addTaskDialog.find( '#fileupload' ).fileupload( {
 				dataType: 'json',
+                url: '/upload/upload',
 				formData: {
 					// eslint-disable-next-line no-underscore-dangle,camelcase
 					_csrf_token: csrfToken
@@ -819,14 +820,14 @@
 				.on( 'fileuploadadd', function ( e, data ) {
 					window.jqXHR = data.submit();
 					deferred = $.Deferred();
-					video2commons.promiseWorkingOn( deferred.promise() );
+					threed2commons.promiseWorkingOn( deferred.promise() );
 					$addTaskDialog.find( '#src-url' ).hide();
 					$addTaskDialog.find( '#src-uploading' ).show();
 
 					$addTaskDialog.find( '#upload-abort' )
 						.off()
 						.click( function () {
-							video2commons.abortUpload( deferred, 'Upload aborted.' );
+							threed2commons.abortUpload( deferred, 'Upload aborted.' );
 						} );
 				} )
 				.on( 'fileuploadchunkdone', function ( e, data ) {
@@ -835,29 +836,29 @@
 					}
 					if ( data.result.result === 'Continue' ) {
 						if ( data.result.offset !== data.uploadedBytes ) {
-							video2commons.abortUpload( deferred, 'Unexpected offset! Expected: ' + data.uploadedBytes + ' Returned: ' + data.result.offset );
+							threed2commons.abortUpload( deferred, 'Unexpected offset! Expected: ' + data.uploadedBytes + ' Returned: ' + data.result.offset );
 							// data.uploadedBytes = data.result.offset; // FIXME: Doesn't work, so we have to abort it
 						}
 					} else if ( data.result.error ) {
-						video2commons.abortUpload( deferred, data.result.error );
+						threed2commons.abortUpload( deferred, data.result.error );
 					} else {
-						video2commons.abortUpload();
+						threed2commons.abortUpload();
 					}
 				} )
 				.on( 'fileuploadprogressall', function ( e, data ) {
-					video2commons.setProgressBar(
+					threed2commons.setProgressBar(
 						$addTaskDialog.find( '#upload-progress' ),
 						data.loaded / data.total * 100
 					);
 				} )
 				.on( 'fileuploadalways', function ( e, data ) {
 					delete data.formData.filekey; // Reset
-					video2commons.reactivatePrevNextButtons();
+					threed2commons.reactivatePrevNextButtons();
 					$addTaskDialog.find( '#src-url' ).show();
 					$addTaskDialog.find( '#src-uploading' ).hide();
 				} )
 				.on( 'fileuploadfail', function () {
-					video2commons.abortUpload( deferred, 'Something went wrong while uploading... try again?' );
+					threed2commons.abortUpload( deferred, 'Something went wrong while uploading... try again?' );
 				} )
 				.on( 'fileuploaddone', function ( e, data ) {
 					if ( data.result.result === 'Success' ) {
@@ -867,14 +868,14 @@
 							.val( url );
 						deferred.resolve();
 					} else {
-						video2commons.abortUpload( deferred, 'Upload does not seem to be successful.' );
+						threed2commons.abortUpload( deferred, 'Upload does not seem to be successful.' );
 					}
 				} );
 		},
 
 		askAPI: function ( url, datain, dataout ) {
 			var deferred = $.Deferred();
-			video2commons.apiPost( url, datain )
+			threed2commons.apiPost( url, datain )
 				.done( function ( data ) {
 					if ( data.error ) {
 						deferred.reject( data.error );
@@ -902,6 +903,6 @@
 
 	$( document )
 		.ready( function () {
-			video2commons.init();
+			threed2commons.init();
 		} );
 }( jQuery ) );

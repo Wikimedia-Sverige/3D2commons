@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Copyright (C) 2015-2016 Zhuyifei1999
+# Copyright (C) 2015-2016, 2018 Zhuyifei1999, Sebastian Berlin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>`
 #
 
-"""video2commons web API."""
+"""threed2commons web API."""
 
 from __future__ import absolute_import
 
@@ -29,18 +29,16 @@ from flask import (
     Blueprint, request, session, jsonify
 )
 
-from video2commons.config import session_key
-
-from video2commons.backend import worker
-
-from video2commons.frontend.shared import (
+from threed2commons.config import session_key
+from threed2commons.backend import worker
+from threed2commons.frontend.shared import (
     redisconnection, check_banned, generate_csrf_token, redis_publish
 )
-from video2commons.frontend.urlextract import (
+from threed2commons.frontend.urlextract import (
     do_extract_url, make_dummy_desc, do_validate_filename,
     do_validate_filedesc, sanitize
 )
-from video2commons.frontend.upload import (
+from threed2commons.frontend.upload import (
     upload as _upload, status as _uploadstatus
 )
 
@@ -50,6 +48,7 @@ api = Blueprint('api', __name__)
 @api.errorhandler(Exception)
 def all_exception_handler(e):
     """Handle an exception and return an error JSON responce."""
+    print traceback.format_exc()
     return error_json(e)
 
 

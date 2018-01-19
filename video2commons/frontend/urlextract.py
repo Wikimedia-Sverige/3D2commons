@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Copyright (C) 2015-2016 Zhuyifei1999
+# Copyright (C) 2015-2016, 2018 Zhuyifei1999, Sebastian
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>`
 #
 
-"""video2commons url extracter."""
+"""threed2commons url extracter."""
 
 import re
 from collections import OrderedDict
@@ -48,7 +48,7 @@ FILEDESC_TEMPLATE = """
 %(license)s
 {{LicenseReview}}
 
-[[Category:Uploaded with video2commons]]
+[[Category:Uploaded with threed2commons]]
 """
 
 
@@ -76,6 +76,7 @@ def make_dummy_desc(filename):
 
 
 def do_extract_url(url):
+    # ANVÄNDS DENNA?
     """Extract a video url."""
     params = {
         'format': 'bestvideo+bestaudio/best',
@@ -295,6 +296,9 @@ def do_validate_filename(filename):
         reobj = rule['pattern'].search(filename)
         assert not reobj or reobj.group(0) == ' ', \
             'Your filename contains an illegal part: %r' % reobj.group(0)
+    if not filename.endswith(".stl"):
+        # Ensure proper file extension.
+        filename += ".stl"
 
     return filename.replace('_', ' ')
 

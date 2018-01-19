@@ -6,18 +6,18 @@ var htmlmin = require( 'gulp-htmlmin' );
 
 gulp.task( 'scripts', function () {
 	return gulp
-		.src( [ './video2commons/frontend/static/*.js', '!./video2commons/frontend/static/*.min.js' ] )
+		.src( [ './threed2commons/frontend/static/*.js', '!./threed2commons/frontend/static/*.min.js' ] )
 		.pipe( rename( { suffix: '.min' } ) )
 		.pipe( uglify() )
-		.pipe( gulp.dest( './video2commons/frontend/static/' ) );
+		.pipe( gulp.dest( './threed2commons/frontend/static/' ) );
 } );
 
 gulp.task( 'html', function () {
 	return gulp
-		.src( [ './video2commons/frontend/**/*.html', '!./video2commons/frontend/**/*.min.html' ] )
+		.src( [ './threed2commons/frontend/**/*.html', '!./threed2commons/frontend/**/*.min.html' ] )
 		.pipe( rename( { suffix: '.min' } ) )
 		.pipe( htmlmin( { collapseWhitespace: true, minifyCSS: true } ) )
-		.pipe( gulp.dest( './video2commons/frontend/' ) );
+		.pipe( gulp.dest( './threed2commons/frontend/' ) );
 } );
 
 gulp.task( 'watch', function () {
@@ -25,10 +25,10 @@ gulp.task( 'watch', function () {
 		// eslint-disable-next-line no-console
 		console.log( 'File ' + event.path + ' was ' + event.type + ', running tasks...' );
 	};
-	gulp.watch( [ './video2commons/frontend/static/*.js', '!./video2commons/frontend/static/*.min.js' ], [ 'scripts' ] )
+	gulp.watch( [ './threed2commons/frontend/static/*.js', '!./threed2commons/frontend/static/*.min.js' ], [ 'scripts' ] )
 		.on( 'change', changeevent );
 
-	gulp.watch( [ './video2commons/frontend/**/*.html', '!./video2commons/frontend/**/*.min.html' ], [ 'html' ] )
+	gulp.watch( [ './threed2commons/frontend/**/*.html', '!./threed2commons/frontend/**/*.min.html' ], [ 'html' ] )
 		.on( 'change', changeevent );
 } );
 

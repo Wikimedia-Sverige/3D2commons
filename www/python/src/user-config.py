@@ -1,1 +1,1 @@
-../../../video2commons/user-config.py
+../../../threed2commons/user-config.py

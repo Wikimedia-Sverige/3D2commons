@@ -29,7 +29,8 @@ import shutil
 import pywikibot
 import hashlib
 
-from video2commons.exceptions import NeedServerSideUpload
+from threed2commons.exceptions import NeedServerSideUpload
+from threed2commons.config import ssu_path
 
 
 def upload(
@@ -75,7 +76,7 @@ def upload_pwb(
 ):
     """Upload with pywikibot."""
     # ENSURE PYWIKIBOT OAUTH PROPERLY CONFIGURED!
-    site = pywikibot.Site('commons', 'commons', user=username)
+    site = pywikibot.Site(user=username)
     page = pywikibot.FilePage(site, wikifilename)
 
     if page.exists():
@@ -88,7 +89,7 @@ def upload_pwb(
     try:
         if not site.upload(
             page, source_filename=filename, comment=comment, text=filedesc,
-            chunk_size=chunked, async=bool(chunked)  # , ignore_warnings=['exists-normalized']
+            chunk_size=chunked # , ignore_warnings=['exists-normalized']
         ):
             errorcallback('Upload failed!')
     except pywikibot.data.api.APIError:
@@ -122,13 +123,13 @@ def upload_ss(
     wikifilename = wikifilename.replace('\r\n', '_')
     wikifilename = wikifilename.replace('\r', '_').replace('\n', '_')
 
-    newfilename = '/srv/v2c/ssu/' + wikifilename
+    newfilename = os.path.join(ssu_path, wikifilename)
     shutil.move(filename, newfilename)
 
     with open(newfilename + '.txt', 'w') as filedescfile:
         filedesc = filedesc.replace(
-            '[[Category:Uploaded with video2commons]]',
-            '[[Category:Uploaded with video2commons/Server-side uploads]]'
+            '[[Category:Uploaded with threed2commons]]',
+            '[[Category:Uploaded with threed2commons/Server-side uploads]]'
         )
         filedescfile.write(filedesc.encode('utf-8'))
 

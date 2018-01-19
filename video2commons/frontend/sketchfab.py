@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Copyright (C) 2016, 2018 Zhuyifei1999, Sebastian Berlin
+# Copyright (C) 2018 Sebastian Berlin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,13 +13,8 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>
-#
+# along with this program.  If not, see <http://www.gnu.org/licenses/>`
 
-"""videocommons backend."""
 
-from __future__ import absolute_import
-
-from threed2commons.backend import worker
-
-__all__ = ['worker']
+def oauth_redirect():
+    pass

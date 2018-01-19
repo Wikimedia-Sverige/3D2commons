@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Copyright (C) 2015-2016 Zhuyifei1999
+# Copyright (C) 2015-2016, 2018 Zhuyifei1999, Sebastian Berlin
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
 #
 
-"""video2commons web shared."""
+"""threed2commons web shared."""
 
 from __future__ import absolute_import
 
@@ -27,7 +27,7 @@ from uuid import uuid4
 from flask import session
 from redis import Redis
 
-from video2commons.config import redis_pw, redis_host
+from threed2commons.config import redis_pw, redis_host
 
 redisconnection = Redis(host=redis_host, db=3, password=redis_pw)
 
@@ -45,4 +45,5 @@ def generate_csrf_token():
 
 
 def redis_publish(typ, data):
+    print "Publishing to redis:", 'v2cnotif:'+typ, json.dumps(data)
     redisconnection.publish('v2cnotif:'+typ, json.dumps(data))
