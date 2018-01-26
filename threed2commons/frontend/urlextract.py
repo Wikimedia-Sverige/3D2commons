@@ -22,7 +22,6 @@
 import re
 from collections import OrderedDict
 
-import youtube_dl
 import pywikibot
 import guess_language
 

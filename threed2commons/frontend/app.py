@@ -95,7 +95,6 @@ def force_https():
 @app.route('/')
 def main():
     """Main page."""
-    print "> main()"
     banned = check_banned()
     if banned:
         return render_template(
@@ -190,7 +189,6 @@ def logincallback():
         session['request_token_secret']
     )
     access_token = handshaker.complete(request_token, request.query_string)
-    print "access_token =", access_token
 
     session.pop('access_token_key', None)
     session.pop('access_token_secret', None)

@@ -45,5 +45,4 @@ def generate_csrf_token():
 
 
 def redis_publish(typ, data):
-    print "Publishing to redis:", 'v2cnotif:'+typ, json.dumps(data)
     redisconnection.publish('v2cnotif:'+typ, json.dumps(data))
