@@ -1,4 +1,3 @@
-youtube-dl
 flask
 guess-language
 celery[redis]
@@ -8,3 +7,4 @@ chardet
 mwoauth
 https://github.com/senko/python-video-converter/zipball/master#egg=videoconverter
 https://github.com/wikimedia/pywikibot-core/zipball/master#egg=pywikibot
+urllib3[secure]
