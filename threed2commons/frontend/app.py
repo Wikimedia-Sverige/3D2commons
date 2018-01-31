@@ -122,6 +122,8 @@ def main():
 
 def dologin():
     """Attempt to login."""
+
+    # return True
     if not (
         'access_token_key' in session and
         'access_token_secret' in session
@@ -172,6 +174,7 @@ def querylanguage(auth):
 @app.route('/oauthinit')
 def loginredirect():
     """Initialize OAuth login."""
+
     app.session_interface.abandon_session(app, session)
 
     redirecturl, request_token = handshaker.initiate()
@@ -220,8 +223,14 @@ def logout():
 
     return redirect(url_for('main'))
 
+@app.route('/sketchfab_oauth_init')
+def sketchfab_oauth_init():
+    redirect_url = sketchfab.oauth_init()
+
+    return redirect(redirect_url)
+
 @app.route('/oauth2_redirect_sketchfab')
 def ouath_redirect():
-    sketchfab.oauth_redirect()
+    sketchfab.oauth_redirect(request.args.get("code", ""))
 
     return redirect(url_for('main'))

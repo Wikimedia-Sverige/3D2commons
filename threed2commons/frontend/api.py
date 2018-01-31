@@ -41,6 +41,7 @@ from threed2commons.frontend.urlextract import (
 from threed2commons.frontend.upload import (
     upload as _upload, status as _uploadstatus
 )
+from threed2commons.frontend import sketchfab
 
 api = Blueprint('api', __name__)
 
@@ -363,20 +364,38 @@ def run_task():
     username = session['username']
     oauth = (session['access_token_key'], session['access_token_secret'])
 
-    taskid = run_task_internal(filename, (
-        url, ie_key, subtitles, filename, filedesc,
-        downloadkey, convertkey, username, oauth
-    ))
+    if request.form["uploadToCommons"] == "true":
+        title = "{} -> commons".format(filename)
+        taskid = run_task_internal(title, (
+            "commons", url, ie_key, subtitles, filename, filedesc,
+            downloadkey, convertkey, username, oauth
+        ))
+    if request.form["uploadToSketchfab"] == "true":
+        title = "{} -> sketchfab".format(filename)
+        taskid = run_task_internal(title, (
+            "sketchfab",
+            url,
+            filename,
+            filedesc,
+            session['sketchfab_access_token']
+        ))
 
     return jsonify(id=taskid, step='success')
 
 
-def run_task_internal(filename, params):
+def run_task_internal(title, params):
     """Internal run task function to accept whatever params given."""
     banned = check_banned()
     assert not banned, 'You are banned from using this tool! Reason: ' + banned
 
-    res = worker.main.delay(*params)
+    destination = params[0]
+    if destination == "commons":
+        # Destination is not needed since we call different functions.
+        res = worker.main.delay(*params[1:])
+    elif destination == "sketchfab":
+        res = worker.sketchfab_task.delay(*params[1:])
+    else:
+        raise RuntimeError("Unknown destination: '{}'".format(destination))
     taskid = res.id
 
     expire = 14 * 24 * 3600  # 2 weeks
@@ -384,7 +403,7 @@ def run_task_internal(filename, params):
     redisconnection.expire('alltasks', expire)
     redisconnection.lpush('tasks:' + session['username'], taskid)
     redisconnection.expire('tasks:' + session['username'], expire)
-    redisconnection.set('titles:' + taskid, filename)
+    redisconnection.set('titles:' + taskid, title)
     redisconnection.expire('titles:' + taskid, expire)
     redisconnection.set('params:' + taskid, json.dumps(params))
     redisconnection.expire('params:' + taskid, expire)

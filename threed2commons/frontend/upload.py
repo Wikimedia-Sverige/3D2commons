@@ -38,8 +38,8 @@ class WrongOffset(Exception):
         self.offset = offset
 
 
-def getpath(digest):
-    return os.path.join(uploads_path, digest)
+def getpath(digest, filename):
+    return os.path.join(uploads_path, digest, filename)
 
 
 def stat(permpath):
@@ -54,7 +54,9 @@ def upload():
     filekey = request.form.get('filekey') or str(uuid.uuid1())
     assert RE_ALLOWED_FILEKEYS.match('filekey'), 'Unacceptable file key'
 
-    permpath = getpath(filekey)
+    directory = os.path.join(uploads_path, filekey)
+    os.mkdir(directory)
+    permpath = getpath(filekey, f.filename)
 
     content_range = (f.headers.get('Content-Range') or
                      request.headers.get('Content-Range'))
@@ -64,7 +66,7 @@ def upload():
     else:
         result, kwargs = handle_full(f, permpath)
 
-    kwargs['filekey'] = filekey
+    kwargs['filekey'] = os.path.join(filekey, f.filename)
 
     return jsonify(result=result, **kwargs)
 

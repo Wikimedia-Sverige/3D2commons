@@ -497,6 +497,8 @@
 				audio: true,
 				video: true,
 				subtitles: true,
+				uploadToCommons: true,
+				uploadToSketchfab: true,
 				filename: true,
 				formats: [],
 				format: '',
@@ -556,6 +558,16 @@
 									.append( $( '<option></option>' )
 										.text( desc ) );
 							} );
+							$addTaskDialog.find( '#upload-to-commons' )
+								.prop(
+                                    'checked',
+                                    newTaskData.uploadToCommons
+                                );
+							$addTaskDialog.find( '#upload-to-sketchfab' )
+								.prop(
+                                    'checked',
+                                    newTaskData.uploadToSketchfab
+                                );
 							$addTaskDialog.find( '#format' )
 								.val( newTaskData.format );
 							$addTaskDialog.find( '#filedesc' )
@@ -680,7 +692,9 @@
 					deferred = $.when( ( function () {
 						var video = $addTaskDialog.find( '#video' ).is( ':checked' ),
 							audio = $addTaskDialog.find( '#audio' ).is( ':checked' );
-						newTaskData.subtitles = $addTaskDialog.find( '#subtitles' )
+						newTaskData.subtitles =
+                            $addTaskDialog
+                            .find( '#subtitles' )
 							.is( ':checked' );
 						if ( !newTaskData.formats.length || video !== newTaskData.video || audio !== newTaskData.audio ) {
 							return threed2commons.askAPI( 'listformats', {
@@ -722,6 +736,14 @@
 					deferred = $.when( ( function () {
 						var filename = $addTaskDialog.find( '#filename' ).val();
 						newTaskData.format = $addTaskDialog.find( '#format' ).val();
+						newTaskData.uploadToCommons =
+                            $addTaskDialog
+                            .find( '#upload-to-commons' )
+							.is( ':checked' );
+						newTaskData.uploadToSketchfab =
+                            $addTaskDialog
+                            .find( '#upload-to-sketchfab' )
+							.is( ':checked' );
 
 						if ( !filename ) {
 							return $.Deferred()

@@ -47,7 +47,7 @@ FILEDESC_TEMPLATE = """
 %(license)s
 {{LicenseReview}}
 
-[[Category:Uploaded with threed2commons]]
+[[Category:Uploaded with 3D2commons]]
 """
 
 
@@ -75,125 +75,33 @@ def make_dummy_desc(filename):
 
 
 def do_extract_url(url):
-    # ANVÄNDS DENNA?
     """Extract a video url."""
-    params = {
-        'format': 'bestvideo+bestaudio/best',
-        'outtmpl': '/dev/null',
-        'writedescription': True,
-        'writeinfojson': True,
-        'writesubtitles': False,
-        'subtitlesformat': 'srt/ass/vtt/best',
-        'cachedir': '/tmp/',
-        'noplaylist': True,  # not implemented in video2commons
-    }
-    info = youtube_dl.YoutubeDL(params).extract_info(url, download=False)
-
-    assert 'formats' in info or info.get('direct'), \
-        'Your url cannot be processed correctly'
-
-    ie_key = info['extractor_key']
-    title = (info.get('title') or '').strip()
-    url = info.get('webpage_url') or url
+    title = ""
 
     filedesc = FILEDESC_TEMPLATE % {
-        'desc': _desc(url, ie_key, title, info),
-        'date': _date(url, ie_key, title, info),
-        'source': _source(url, ie_key, title, info),
-        'uploader': _uploader(url, ie_key, title, info),
-        'license': _license(url, ie_key, title, info)
+        'desc': _desc(title),
+        'date': "",
+        'source': url,
+        'uploader': "",
+        'license': DEFAULT_LICENSE
     }
 
     return {
         'url': url,
-        'extractor': ie_key,
+        'extractor': title,
         'filedesc': filedesc.strip(),
         'filename': sanitize(title)
     }
 
 
-def _date(url, ie_key, title, info):
-    date = (info.get('upload_date') or '').strip()
-    if re.match(r'^[0-9]{8}$', date):
-        date = '%s-%s-%s' % (date[0:4], date[4:6], date[6:8])
-    return date
-
-
-def _source(url, ie_key, title, info):
-    if info['id']:
-        if ie_key == 'Youtube':
-            return '{{From YouTube|1=%(id)s|2=%(title)s}}' % \
-                {'id': info['id'], 'title': escape_wikitext(title)}
-        elif ie_key == 'Vimeo':
-            return '{{From Vimeo|1=%(id)s|2=%(title)s}}' % \
-                {'id': info['id'], 'title': escape_wikitext(title)}
-
-    if ie_key == 'Generic':
-        return url
-    else:
-        return '[%(url)s %(title)s - %(extractor)s]' % \
-            {'url': url, 'title': escape_wikitext(title), 'extractor': ie_key}
-
-
-def _desc(url, ie_key, title, info):
-    desc_orig = desc = (info.get('description') or '').strip() or title
+def _desc(title):
+    desc_orig = desc = title
     desc = escape_wikitext(desc)
     if len(desc_orig) > 100:
         lang = guess_language.guessLanguage(desc_orig)
         if lang != 'UNKNOWN':
             desc = u'{{' + lang + u'|1=' + desc + u'}}'
     return desc
-
-
-def _uploader(url, ie_key, title, info):
-    uploader = escape_wikitext((info.get('uploader') or '').strip())
-    uploader_url = info.get('uploader_url') or ''
-    if uploader_url:
-        # HACK: YouTube outputs http:// atm (issue #80)
-        if ie_key == 'Youtube':
-            uploader_url = uploader_url.replace('http://', 'https://')
-        uploader = u'[%s %s]' % (uploader_url, uploader)
-    return uploader
-
-
-def _license(url, ie_key, title, info):
-    uploader = info.get('uploader')
-    uploader_param = ''
-    if uploader:
-        uploader_param = '|' + escape_wikitext(uploader.strip())
-
-    default = DEFAULT_LICENSE
-    if ie_key == 'Youtube' and info.get('license') == \
-            'Creative Commons Attribution license (reuse allowed)':
-        return '{{YouTube CC-BY%s}}' % uploader_param
-    elif ie_key == 'Flickr':
-        return {
-            'Attribution':
-                '{{cc-by-2.0%s}}' % uploader_param,
-            'Attribution-ShareAlike':
-                '{{cc-by-sa-2.0%s}}' % uploader_param,
-            'No known copyright restrictions':
-                '{{Flickr-no known copyright restrictions}}',
-            'United States government work':
-                '{{PD-USGov}}',
-            'Public Domain Dedication (CC0)':
-                '{{cc-zero}}',
-            'Public Domain Work':
-                '{{safesubst:Flickr-public domain mark/subst}}',
-            'Public Domain Mark':
-                '{{safesubst:Flickr-public domain mark/subst}}',
-        }.get(info.get('license'), default)
-    elif ie_key == 'Vimeo':
-        return {
-            'by':
-                '{{cc-by-3.0%s}}' % uploader_param,
-            'by-sa':
-                '{{cc-by-sa-3.0%s}}' % uploader_param,
-            'cc0':
-                '{{cc-zero}}',
-        }.get(info.get('license'), default)
-
-    return default
 
 
 def escape_wikitext(wikitext):

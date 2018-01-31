@@ -8,5 +8,8 @@
 "http_host": "server.url/threed2commons/static/ssu"
 "uploads_path": "/local/path/to/uploads",
 "ssu_path": "/local/path/to/ssu",
-"pwb_site": "commons.wikimedia.org"
+"pwb_site": "commons.wikimedia.org",
+"sketchfab_client_id": "Get this from Sketchfab, see: https://sketchfab.com/developers/oauth#registering-your-app",
+"sketchfab_client_secret": "Get this from Sketchfab, see: https://sketchfab.com/developers/oauth#registering-your-app",
+"sketchfab_redirect_uri": "server.url/threed2commons/oauth2_redirect_sketchfab"
 }

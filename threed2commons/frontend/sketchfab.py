@@ -15,6 +15,35 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>`
 
+import requests
+import flask
 
-def oauth_redirect():
-    pass
+from threed2commons import config
+
+def oauth_init():
+    authorize_url = "https://sketchfab.com/oauth2/authorize/"
+    url = '{}?response_type=code&client_id={}&redirect_uri={}'.format(
+        authorize_url,
+        config.sketchfab_client_id,
+        config.sketchfab_redirect_uri
+    )
+
+    return url
+
+
+def oauth_redirect(code):
+    access_token_url = "https://sketchfab.com/oauth2/token/"
+    response = requests.post(
+        access_token_url,
+        data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'client_id': config.sketchfab_client_id,
+            'client_secret': config.sketchfab_client_secret,
+            'redirect_uri': config.sketchfab_redirect_uri
+        }
+    )
+    print "repsonse = {}".format(response.content)
+    access_token = response.json()["access_token"]
+    print "frontend: access_token = {}".format(access_token)
+    flask.session["sketchfab_access_token"] = access_token

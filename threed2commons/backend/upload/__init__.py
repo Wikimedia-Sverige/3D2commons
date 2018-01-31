@@ -31,11 +31,12 @@ import hashlib
 
 from threed2commons.exceptions import NeedServerSideUpload
 from threed2commons.config import ssu_path
+from threed2commons.backend.upload import sketchfab
 
 
 def upload(
-    filename, wikifilename, sourceurl, http_host, filedesc, username,
-    statuscallback=None, errorcallback=None
+        filename, wikifilename, sourceurl, http_host, filedesc, username,
+        statuscallback=None, errorcallback=None
 ):
     """Upload a file from filename to wikifilename."""
     statuscallback = statuscallback or (lambda text, percent: None)
@@ -128,8 +129,8 @@ def upload_ss(
 
     with open(newfilename + '.txt', 'w') as filedescfile:
         filedesc = filedesc.replace(
-            '[[Category:Uploaded with threed2commons]]',
-            '[[Category:Uploaded with threed2commons/Server-side uploads]]'
+            '[[Category:Uploaded with 3D2commons]]',
+            '[[Category:Uploaded with 3D2commons/Server-side uploads]]'
         )
         filedescfile.write(filedesc.encode('utf-8'))
 
