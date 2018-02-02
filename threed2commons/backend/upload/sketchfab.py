@@ -47,6 +47,8 @@ def upload(
         access_token,
         path,
         filename,
+        date,
+        license_,
         description,
         statuscallback,
         errorcallback
@@ -56,22 +58,23 @@ def upload(
     """
 
     model_endpoint = os.path.join(SKETCHFAB_API_URL, 'models')
-    # description = 'This is a bob model I made with love and passion'
-    # password = 'my-password'  # requires a pro account
-    # private = 1  # requires a pro account
-    # tags = ['bob', 'character', 'video-games']  # Array of tags
-    # categories = ['gaming']  # Array of categories slugs
-    # license = 'CC Attribution'  # License label
-    # isPublished = False, # Model will be on draft instead of published
-    # isInspectable = True, # Allow 2D view in model inspector
-
+    license_slug = None
+    if license_ == "CC0":
+        license_slug = "cc0"
+    elif license_ == "CC-BY":
+        license_slug = "by"
+    elif license_ == "CC-BY-SA":
+        license_slug = "by-sa"
+    else:
+        errorcallback(
+            "License not recognized by Sketchfab: {}".format(license_)
+        )
+    description = create_description(description, date)
     data = {
         'name': filename,
+        'license': license_slug,
         'description': description,
         'tags': ["uploaded-with-3D2commons"],
-        # 'categories': categories,
-        'license': 'CC Attribution',
-        # 'isInspectable': isInspectable
     }
 
     f = open(path, 'rb')
@@ -97,3 +100,9 @@ def upload(
     model_url = r["viewerUrl"]
     statuscallback('Upload success!', 100)
     return model_url
+
+
+def create_description(description, date):
+    description += \
+        "\n\n**Date:** {}".format(date)
+    return description

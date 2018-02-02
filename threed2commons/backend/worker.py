@@ -24,12 +24,15 @@ import sys
 import shutil
 import uuid
 import urllib
+from collections import OrderedDict
+import re
 
 import celery
 from celery.contrib.abortable import AbortableTask
 from celery.exceptions import Ignore
 from redis import Redis
 import pywikibot
+import guess_language
 
 from threed2commons.exceptions import TaskError, TaskAbort, NeedServerSideUpload
 from threed2commons.backend import upload
@@ -116,8 +119,15 @@ def prepare_upload(task, url, statuscallback):
 
 @app.task(bind=True, track_started=False, base=AbortableTask)
 def main(
-        self, url, ie_key, subtitles, filename, filedesc,
-        downloadkey, convertkey, username, oauth
+        self,
+        url,
+        filename,
+        date,
+        license_,
+        filedesc,
+        creator,
+        username,
+        oauth
 ):
     """Main worker code."""
 
@@ -132,10 +142,12 @@ def main(
         pywikibot.config.authenticate[pwb_site] = \
             (consumer_key, consumer_secret) + tuple(oauth)
         pywikibot.Site(user=username).login()
+        wikitext = \
+            build_wikitext(filedesc, date, creator, license_)
 
         statuscallback('Uploading...', -1)
         filename, wikifileurl = upload.upload(
-            path, filename, url, http_host, filedesc, username,
+            path, filename, url, http_host, wikitext, username,
             statuscallback, errorcallback
         )
         if not wikifileurl:
@@ -164,8 +176,49 @@ def main(
         pywikibot._sites.clear()
 
 
+def build_wikitext(description, date, creator, license_):
+    license_template = None
+    if license_ == "CC0":
+        license_template = "{{Cc-zero}}"
+    elif license_ == "CC-BY":
+        license_template = "{{Cc-by-4.0}}"
+    elif license_ == "CC-BY-SA":
+        license_template = "{{Cc-by-sa-4.0}}"
+    else:
+        errorcallback(
+            "License not recognized by Wikimedia Commons: {}".format(license_)
+        )
+    wikitext = """
+=={{int:filedesc}}==
+{{Information
+|description=%s
+|date=%s
+|source={{own}}
+|author=%s
+|permission=
+|other_versions=
+|other_fields=
+}}
+
+=={{int:license-header}}==
+%s
+{{3dpatent}}
+
+[[Category:Uploaded with 3D2commons]]
+""" % (description, date, creator, license_template)
+    return (wikitext)
+
+
 @app.task(bind=True, track_started=False, base=AbortableTask)
-def sketchfab_task(self, url, filename, description, access_token):
+def sketchfab_task(
+        self,
+        url,
+        filename,
+        date,
+        license_,
+        description,
+        access_token
+):
     stats = Stats()
 
     def statuscallback(text, percent):
@@ -176,6 +229,8 @@ def sketchfab_task(self, url, filename, description, access_token):
         access_token,
         path,
         filename,
+        date,
+        license_,
         description,
         statuscallback,
         errorcallback

@@ -12,4 +12,6 @@
 "sketchfab_client_id": "Get this from Sketchfab, see: https://sketchfab.com/developers/oauth#registering-your-app",
 "sketchfab_client_secret": "Get this from Sketchfab, see: https://sketchfab.com/developers/oauth#registering-your-app",
 "sketchfab_redirect_uri": "server.url/threed2commons/oauth2_redirect_sketchfab"
+"licenses": ["list", "of", "valid", "licenses"],
+"default_license": "default license"
 }

@@ -492,16 +492,16 @@
 		newTask: function ( taskdata ) {
 			newTaskData = {
 				step: 'source',
-				url: '',
+				url: null,
 				extractor: '',
-				audio: true,
-				video: true,
 				subtitles: true,
 				uploadToCommons: true,
 				uploadToSketchfab: true,
-				filename: true,
-				formats: [],
-				format: '',
+				filename: null,
+                date: null,
+                creator: null,
+                license: null,
+                licenses: [],
 				filedesc: '',
 				uploadedFile: {},
 				filenamechecked: false,
@@ -522,12 +522,16 @@
 							$addTaskDialog.find( '.modal-body' )
 								.html( dataHtml );
 
-							$addTaskDialog.find( 'a#fl' )
+							$( 'a#fl' )
 								.attr( 'href', '//commons.wikimedia.org/wiki/Commons:Licensing#Acceptable_licenses' );
-							$addTaskDialog.find( 'a#pd' )
+							$( 'a#pd' )
 								.attr( 'href', '//commons.wikimedia.org/wiki/Commons:Licensing#Material_in_the_public_domain' );
-							$addTaskDialog.find( 'a#fu' )
+							$( 'a#fu' )
 								.attr( 'href', '//commons.wikimedia.org/wiki/Commons:FU' );
+							$( 'a#3dpl' )
+								.attr( 'href', '//wikimediafoundation.org/wiki/Wikimedia_3D_file_patent_license' );
+							$( 'a#3dfp' )
+								.attr( 'href', '//meta.wikimedia.org/wiki/Wikilegal/3D_files_and_3D_printing' );
 
 							$addTaskDialog.find( '#url' )
 								.val( newTaskData.url )
@@ -549,27 +553,41 @@
 							dataHtml = Mustache.render( dataHtml, i18n );
 							$addTaskDialog.find( '.modal-body' )
 								.html( dataHtml );
-
 							$addTaskDialog.find( '#filename' )
 								.val( newTaskData.filename )
 								.focus();
-							$.each( newTaskData.formats, function ( i, desc ) {
-								$addTaskDialog.find( '#format' )
-									.append( $( '<option></option>' )
-										.text( desc ) );
-							} );
-							$addTaskDialog.find( '#upload-to-commons' )
+							$( '#upload-to-commons' )
 								.prop(
                                     'checked',
                                     newTaskData.uploadToCommons
                                 );
-							$addTaskDialog.find( '#upload-to-sketchfab' )
+							$( '#upload-to-sketchfab' )
 								.prop(
                                     'checked',
                                     newTaskData.uploadToSketchfab
                                 );
-							$addTaskDialog.find( '#format' )
-								.val( newTaskData.format );
+							$( '#date' )
+								.val( newTaskData.date );
+                            if ( newTaskData.creator == null ) {
+                                // Use commons account name as default.
+			                    $.get( 'api/username' )
+				                    .done( function ( data ) {
+							            $( '#creator' )
+								            .val( data.username );
+				                    } );
+                            } else {
+                                $( '#creator' )
+								    .val( newTaskData.creator );
+                            }
+							$( '#license' )
+								.val( newTaskData.license );
+							$.each(
+                                newTaskData.licenses,
+                                function ( i, desc ) {
+								    $( '#license' )
+									    .append( $( '<option></option>' )
+							                     .text( desc ) );
+							    } );
 							$addTaskDialog.find( '#filedesc' )
 								.val( newTaskData.filedesc );
 						} );
@@ -581,25 +599,13 @@
 							dataHtml = Mustache.render( dataHtml, i18n );
 							$addTaskDialog.find( '.modal-body' )
 								.html( dataHtml );
-
-							var keep = [];
-							if ( newTaskData.video ) {
-								keep.push( i18n.video );
-							}
-							if ( newTaskData.audio ) {
-								keep.push( i18n.audio );
-							}
-							if ( newTaskData.subtitles ) {
-								keep.push( i18n.subtitles );
-							}
-							$addTaskDialog.find( '#keep' )
-								.text( keep.join( ', ' ) );
-
 							threed2commons.setText( [
 								'url',
-								'extractor',
 								'filename',
-								'format'
+								'date',
+								'source',
+								'creator',
+								'license',
 							], newTaskData );
 
 							$addTaskDialog.find( '#filedesc' )
@@ -696,11 +702,11 @@
                             $addTaskDialog
                             .find( '#subtitles' )
 							.is( ':checked' );
-						if ( !newTaskData.formats.length || video !== newTaskData.video || audio !== newTaskData.audio ) {
-							return threed2commons.askAPI( 'listformats', {
-								video: video,
-								audio: audio
-							}, [ 'video', 'audio', 'format', 'formats' ] );
+						if ( !newTaskData.licenses.length ) {
+                            return threed2commons.askAPI(
+                                'licenses',
+                                {},
+                                [ 'licenses', 'license' ] );
 						} else {
 							return resolved;
 						}
@@ -744,6 +750,10 @@
                             $addTaskDialog
                             .find( '#upload-to-sketchfab' )
 							.is( ':checked' );
+						newTaskData.date = $( '#date' ).val();
+						newTaskData.source = $( '#source' ).val();
+						newTaskData.creator = $( '#creator' ).val();
+						newTaskData.license = $( '#license' ).val();
 
 						if ( !filename ) {
 							return $.Deferred()
@@ -763,12 +773,6 @@
 						}
 					}() ), ( function () {
 						var filedesc = $addTaskDialog.find( '#filedesc' ).val();
-
-						if ( !filedesc ) {
-							return $.Deferred()
-								.reject( 'File description cannot be empty!' )
-								.promise();
-						}
 
 						if ( !newTaskData.filedescchecked || filedesc !== newTaskData.filedesc ) {
 							return threed2commons.askAPI( 'validatefiledesc', {
@@ -906,7 +910,6 @@
 					for ( var i = 0; i < dataout.length; i++ ) {
 						newTaskData[ dataout[ i ] ] = data[ dataout[ i ] ];
 					}
-
 					deferred.resolve( data );
 				} )
 				.fail( function () {

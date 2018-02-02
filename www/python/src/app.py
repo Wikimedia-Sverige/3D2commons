@@ -28,4 +28,4 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../../../")
 from threed2commons.frontend import app  # NOQA
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

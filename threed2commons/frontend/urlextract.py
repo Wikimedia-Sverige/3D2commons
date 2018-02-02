@@ -52,13 +52,14 @@ FILEDESC_TEMPLATE = """
 
 
 def make_dummy_desc(filename):
-    filedesc = FILEDESC_TEMPLATE % {
-        'desc': '',
-        'date': '',
-        'source': '',
-        'uploader': '',
-        'license': DEFAULT_LICENSE
-    }
+    filedesc = ""
+    # filedesc = FILEDESC_TEMPLATE % {
+    #     'desc': '',
+    #     'date': '',
+    #     'source': '',
+    #     'uploader': '',
+    #     'license': DEFAULT_LICENSE
+    # }
 
     # Remove the extension
     filename = filename.rsplit('.', 1)
@@ -78,13 +79,14 @@ def do_extract_url(url):
     """Extract a video url."""
     title = ""
 
-    filedesc = FILEDESC_TEMPLATE % {
-        'desc': _desc(title),
-        'date': "",
-        'source': url,
-        'uploader': "",
-        'license': DEFAULT_LICENSE
-    }
+    filedesc = ""
+    # filedesc = FILEDESC_TEMPLATE % {
+    #     'desc': _desc(title),
+    #     'date': "",
+    #     'source': url,
+    #     'uploader': "",
+    #     'license': DEFAULT_LICENSE
+    # }
 
     return {
         'url': url,

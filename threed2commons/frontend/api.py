@@ -29,7 +29,7 @@ from flask import (
     Blueprint, request, session, jsonify
 )
 
-from threed2commons.config import session_key
+from threed2commons.config import session_key, licenses, default_license
 from threed2commons.backend import worker
 from threed2commons.frontend.shared import (
     redisconnection, check_banned, generate_csrf_token, redis_publish
@@ -279,35 +279,9 @@ def make_desc():
     return jsonify(**make_dummy_desc(filename))
 
 
-@api.route('/listformats', methods=['POST'])
-def list_formats():
-    """List the possible convert formats from a given audio/video pair."""
-    formats = []
-    prefer = ''
-    video = _boolize(request.form['video'])
-    audio = _boolize(request.form['audio'])
-    if video:
-        if audio:
-            formats = ['ogv (Theora/Vorbis)', 'webm (VP8/Vorbis)',
-                       'webm (VP9/Opus, experimental)']
-            prefer = 'webm (VP8/Vorbis)'
-        else:
-            formats = ['ogv (Theora)', 'webm (VP8)',
-                       'webm (VP9, experimental)']
-            prefer = 'webm (VP8)'
-    else:
-        if audio:
-            formats = ['ogg (Vorbis)', 'opus (Opus, experimental)']
-            prefer = 'ogg (Vorbis)'
-        else:
-            raise RuntimeError('Either video or audio must be kept')
-
-    return jsonify(
-        audio=audio,
-        video=video,
-        format=prefer,
-        formats=formats
-    )
+@api.route('/licenses', methods=['POST'])
+def list_licenses():
+    return jsonify({"licenses": licenses, "license": default_license})
 
 
 def _boolize(data):
@@ -330,55 +304,39 @@ def validate_filedesc():
     )
 
 
-def get_backend_keys(format):
-    """Get the youtube-dl download format key."""
-    return {
-        'ogv (Theora)':
-            ('bestvideo/best', 'an.ogv'),
-        'webm (VP8)':
-            ('bestvideo/best', 'an.webm'),
-        'webm (VP9, experimental)':
-            ('bestvideo/best', 'an.vp9.webm'),
-        'ogg (Vorbis)':
-            ('bestaudio/best', 'ogg'),
-        'opus (Opus, experimental)':
-            ('bestaudio/best', 'opus'),
-        'ogv (Theora/Vorbis)':
-            ('bestvideo+bestaudio/best', 'ogv'),
-        'webm (VP8/Vorbis)':
-            ('bestvideo+bestaudio/best', 'webm'),
-        'webm (VP9/Opus, experimental)':
-            ('bestvideo+bestaudio/best', 'vp9.webm'),
-    }[format]
-
-
 @api.route('/task/run', methods=['POST'])
 def run_task():
     """Run a task with parameters from session."""
     url = request.form['url']
-    ie_key = request.form['extractor']
-    subtitles = request.form['subtitles']
     filename = sanitize(request.form['filename'])
+    date = request.form['date']
+    creator = request.form['creator']
+    license_ = request.form['license']
     filedesc = request.form['filedesc']
-    downloadkey, convertkey = get_backend_keys(request.form['format'])
-    username = session['username']
-    oauth = (session['access_token_key'], session['access_token_secret'])
+    base_parameters = [
+        url,
+        filename,
+        date,
+        license_,
+        filedesc
+    ]
 
     if request.form["uploadToCommons"] == "true":
         title = "{} -> commons".format(filename)
-        taskid = run_task_internal(title, (
-            "commons", url, ie_key, subtitles, filename, filedesc,
-            downloadkey, convertkey, username, oauth
-        ))
+        username = session['username']
+        oauth = (session['access_token_key'], session['access_token_secret'])
+        commons_parameters = base_parameters[:]
+        commons_parameters.extend([creator, username, oauth])
+        # Add destination as first parameter.
+        commons_parameters.insert(0, "commons")
+        taskid = run_task_internal(title, commons_parameters)
     if request.form["uploadToSketchfab"] == "true":
         title = "{} -> sketchfab".format(filename)
-        taskid = run_task_internal(title, (
-            "sketchfab",
-            url,
-            filename,
-            filedesc,
-            session['sketchfab_access_token']
-        ))
+        access_token = session['sketchfab_access_token']
+        sketchfab_parameters = base_parameters[:]
+        sketchfab_parameters.append(access_token)
+        sketchfab_parameters.insert(0, "sketchfab")
+        taskid = run_task_internal(title, sketchfab_parameters)
 
     return jsonify(id=taskid, step='success')
 
@@ -482,3 +440,8 @@ def upload():
 @api.route('/upload/status', methods=['POST'])
 def uploadstatus():
     return _uploadstatus()
+
+@api.route('/username')
+def get_username():
+    print "/username"
+    return jsonify(username=session['username'])
