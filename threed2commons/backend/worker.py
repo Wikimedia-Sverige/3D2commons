@@ -38,13 +38,13 @@ from threed2commons.exceptions import TaskError, TaskAbort, NeedServerSideUpload
 from threed2commons.backend import upload
 from threed2commons.backend.upload import sketchfab
 from threed2commons.config import (
-    redis_pw, redis_host, consumer_key, consumer_secret, http_host,
-    uploads_path, pwb_site, ssu_path
+    redis_host, consumer_key, consumer_secret, http_host,
+    uploads_path, pwb_site, ssu_path, redis_prefix
 )
 
-redisurl = 'redis://:' + redis_pw + '@' + redis_host + ':6379/'
+redisurl = 'redis://' + redis_host + ':6379/'
 app = celery.Celery(
-    'v2cbackend',
+    '3d2cbackend',
     backend=redisurl + '1',
     broker=redisurl + '2'
 )
@@ -52,7 +52,8 @@ app.conf.CELERY_TASK_RESULT_EXPIRES = 30 * 24 * 3600  # 1 month
 
 app.conf.CELERY_ACCEPT_CONTENT = ['json']
 
-redisconnection = Redis(host=redis_host, db=3, password=redis_pw)
+redisconnection = Redis(host=redis_host, db=3)
+print "worker: {}".format(redisconnection.lrange(redis_prefix + 'alltasks', 0, -1))
 
 
 class Stats:
@@ -83,7 +84,7 @@ def errorcallback(text):
 
 def prepare_upload(task, url, statuscallback):
     # Get a lock to prevent double-running with same task ID
-    lockkey = 'tasklock:' + task.request.id
+    lockkey = redis_prefix + 'tasklock:' + task.request.id
     if redisconnection.exists(lockkey):
         raise Ignore
 

@@ -43,7 +43,5 @@ def oauth_redirect(code):
             'redirect_uri': config.sketchfab_redirect_uri
         }
     )
-    print "repsonse = {}".format(response.content)
     access_token = response.json()["access_token"]
-    print "frontend: access_token = {}".format(access_token)
     flask.session["sketchfab_access_token"] = access_token

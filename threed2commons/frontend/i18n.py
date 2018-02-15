@@ -26,6 +26,7 @@ import json
 
 from flask import Blueprint, Response, request, session, g
 from threed2commons.frontend.shared import redisconnection
+from threed2commons.config import redis_prefix
 
 i18nblueprint = Blueprint('i18n', __name__)
 
@@ -48,7 +49,7 @@ def urlget(lang):
 
 def get(lang):
     """Get the i18n of language lang and output dict."""
-    i18nkey = 'i18n:' + lang
+    i18nkey = redis_prefix + 'i18n:' + lang
     gval = g.get(i18nkey, None)
     if gval:
         return gval

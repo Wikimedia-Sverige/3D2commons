@@ -29,7 +29,7 @@ from flask import (
     Blueprint, request, session, jsonify
 )
 
-from threed2commons.config import session_key, licenses, default_license
+from threed2commons.config import session_key, licenses, default_license, redis_prefix
 from threed2commons.backend import worker
 from threed2commons.frontend.shared import (
     redisconnection, check_banned, generate_csrf_token, redis_publish
@@ -112,15 +112,6 @@ def get_csrf():
     return jsonify(
         csrf=generate_csrf_token()
     )
-
-
-@api.route('/iosession')
-def get_iosession():
-    """Get a pointer to session for read-only socket.io notifications."""
-    iosession = str(uuid4())
-    redisconnection.set('iosession:' + iosession, session.sid)
-    redisconnection.expire('iosession:' + iosession, 60)
-    return jsonify(iosession=iosession)
 
 
 @api.route('/status')
@@ -216,8 +207,8 @@ def _status(id):
                     'status': 'fail',
                     'text': format_exception(e),
                     'restartable': (
-                        (not redisconnection.exists('restarted:' + id)) and
-                        redisconnection.exists('params:' + id)
+                        (not redisconnection.exists(redis_prefix + 'restarted:' + id)) and
+                        redisconnection.exists(redis_prefix + 'params:' + id)
                     )
                 })
         elif state == 'RETRY':
@@ -243,7 +234,7 @@ def _status(id):
 
 def is_sudoer(username):
     """Check if a user is a sudoer."""
-    return username in redisconnection.lrange('sudoers', 0, -1)
+    return username in redisconnection.lrange(redis_prefix + 'sudoers', 0, -1)
 
 
 def get_tasks():
@@ -255,12 +246,12 @@ def get_tasks():
     else:
         key = 'tasks:' + username
 
-    return key, redisconnection.lrange(key, 0, -1)[::-1]
+    return key, redisconnection.lrange(redis_prefix + key, 0, -1)[::-1]
 
 
 def get_title_from_task(id):
     """Get task title from task ID."""
-    return redisconnection.get('titles:' + id)
+    return redisconnection.get(redis_prefix + 'titles:' + id)
 
 
 @api.route('/extracturl', methods=['POST'])
@@ -357,14 +348,20 @@ def run_task_internal(title, params):
     taskid = res.id
 
     expire = 14 * 24 * 3600  # 2 weeks
-    redisconnection.lpush('alltasks', taskid)
-    redisconnection.expire('alltasks', expire)
-    redisconnection.lpush('tasks:' + session['username'], taskid)
-    redisconnection.expire('tasks:' + session['username'], expire)
-    redisconnection.set('titles:' + taskid, title)
-    redisconnection.expire('titles:' + taskid, expire)
-    redisconnection.set('params:' + taskid, json.dumps(params))
-    redisconnection.expire('params:' + taskid, expire)
+    redisconnection.lpush(redis_prefix + 'alltasks', taskid)
+    redisconnection.expire(redis_prefix + 'alltasks', expire)
+    redisconnection.lpush(
+        redis_prefix + 'tasks:' + session['username'],
+        taskid
+    )
+    redisconnection.expire(
+        redis_prefix + 'tasks:' + session['username'],
+        expire
+    )
+    redisconnection.set(redis_prefix + 'titles:' + taskid, title)
+    redisconnection.expire(redis_prefix + 'titles:' + taskid, expire)
+    redisconnection.set(redis_prefix + 'params:' + taskid, json.dumps(params))
+    redisconnection.expire(redis_prefix + 'params:' + taskid, expire)
 
     redis_publish('add', {'taskid': taskid, 'user': session['username']})
     redis_publish('update', {'taskid': taskid, 'data': _status(taskid)})
@@ -377,20 +374,20 @@ def restart_task():
     """Reastart a task: run a task with params of another task."""
     id = request.form['id']
 
-    filename = redisconnection.get('titles:' + id)
+    filename = redisconnection.get(redis_prefix + 'titles:' + id)
     assert filename, 'Task does not exist'
     assert id in \
-        redisconnection.lrange('tasks:' + session['username'], 0, -1), \
+        redisconnection.lrange(redis_prefix + 'tasks:' + session['username'], 0, -1), \
         'Task must belong to you.'
 
-    restarted = redisconnection.get('restarted:' + id)
+    restarted = redisconnection.get(redis_prefix + 'restarted:' + id)
     assert not restarted, \
         'Task has already been restarted with id ' + restarted
-    params = redisconnection.get('params:' + id)
+    params = redisconnection.get(redis_prefix + 'params:' + id)
     assert params, 'Could not extract the task parameters.'
 
     newid = run_task_internal(filename, json.loads(params))
-    redisconnection.set('restarted:' + id, newid)
+    redisconnection.set(redis_prefix + 'restarted:' + id, newid)
 
     redis_publish('update', {'taskid': id, 'data': _status(id)})
 
@@ -403,13 +400,13 @@ def remove_task():
     id = request.form['id']
     username = session['username']
     assert id in \
-        redisconnection.lrange('tasks:' + username, 0, -1), \
+        redisconnection.lrange(redis_prefix + 'tasks:' + username, 0, -1), \
         'Task must belong to you.'
-    redisconnection.lrem('alltasks', id)  # not StrictRedis
-    redisconnection.lrem('tasks:' + username, id)  # not StrictRedis
-    redisconnection.delete('titles:' + id)
-    redisconnection.delete('params:' + id)
-    redisconnection.delete('restarted:' + id)
+    redisconnection.lrem(redis_prefix + 'alltasks', id)  # not StrictRedis
+    redisconnection.lrem(redis_prefix + 'tasks:' + username, id)  # not StrictRedis
+    redisconnection.delete(redis_prefix + 'titles:' + id)
+    redisconnection.delete(redis_prefix + 'params:' + id)
+    redisconnection.delete(redis_prefix + 'restarted:' + id)
 
     redis_publish('remove', {'taskid': id})
 
@@ -422,7 +419,7 @@ def abort_task():
     id = request.form['id']
     username = session['username']
     assert id in \
-        redisconnection.lrange('tasks:' + username, 0, -1), \
+        redisconnection.lrange(redis_prefix + 'tasks:' + username, 0, -1), \
         'Task must belong to you.'
     worker.main.AsyncResult(id).abort()
 
@@ -443,5 +440,4 @@ def uploadstatus():
 
 @api.route('/username')
 def get_username():
-    print "/username"
     return jsonify(username=session['username'])

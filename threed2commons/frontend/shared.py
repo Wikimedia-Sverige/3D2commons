@@ -27,9 +27,9 @@ from uuid import uuid4
 from flask import session
 from redis import Redis
 
-from threed2commons.config import redis_pw, redis_host
+from threed2commons.config import redis_host
 
-redisconnection = Redis(host=redis_host, db=3, password=redis_pw)
+redisconnection = Redis(host=redis_host, db=3)
 
 
 def check_banned():
@@ -45,4 +45,4 @@ def generate_csrf_token():
 
 
 def redis_publish(typ, data):
-    redisconnection.publish('v2cnotif:'+typ, json.dumps(data))
+    redisconnection.publish('3d2cnotif:'+typ, json.dumps(data))
